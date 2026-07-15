@@ -1,0 +1,10 @@
+{
+    "schemaVersion":  1,
+    "developmentLogging":  false,
+    "chromaticChanceDenominator":  4096,
+    "chromaticParentBonusRolls":  0,
+    "defaultRenderMode":  "STATIC_ONLY",
+    "enabledLayerNames":  [
+                              "flame"
+                          ]
+}

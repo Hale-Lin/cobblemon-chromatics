@@ -1,0 +1,18 @@
+.gradle/
+.gradle-bootstrap/
+.idea/
+.vscode/
+build/
+run/
+out/
+*.iml
+
+# Downloaded mod dependencies are verified by scripts/sync-dependencies.ps1.
+libs/*.jar
+
+# Generated release artifacts.
+dist/
+
+# Generated previews and temporary working files.
+outputs/icon-design/status-icons-preview.png
+work/

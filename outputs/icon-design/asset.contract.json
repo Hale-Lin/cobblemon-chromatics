@@ -1,0 +1,13 @@
+{
+  "canvas": "16x16",
+  "reference": {
+    "artifact": "Cobblemon 1.7.3",
+    "path": "assets/cobblemon/textures/gui/summary/icon_shiny.png",
+    "usage": "Visual language, bounds, and alpha treatment only"
+  },
+  "outputs": {
+    "icon_chromatic.png": "New hollow four-color prism-ring silhouette",
+    "icon_shiny_chromatic.png": "Original shiny silhouette split into the chromatic cyan, magenta, gold, and violet palette"
+  },
+  "generator": "scripts/generate-status-icons.ps1"
+}

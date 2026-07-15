@@ -1,0 +1,36 @@
+{
+    "schemaVersion":  1,
+    "id":  "cobblemon_chromatics",
+    "version":  "${version}",
+    "name":  "Cobblemon Chromatics",
+    "description":  "A maintainable, independent Cobblemon addon for shiny-related extensions.",
+    "authors":  [
+                    "Project Team"
+                ],
+    "contact":  {
+
+                },
+    "license":  "All-Rights-Reserved",
+    "environment":  "*",
+    "entrypoints":  {
+                        "main":  [
+                                     "dev.cobblemonproject.chromatics.CobblemonChromatics"
+                                 ],
+                        "client":  [
+                                       "dev.cobblemonproject.chromatics.client.CobblemonChromaticsClient"
+                                   ],
+                        "server":  [
+                                       "dev.cobblemonproject.chromatics.server.CobblemonChromaticsServer"
+                                   ]
+                    },
+    "depends":  {
+                    "fabricloader":  "\u003e=0.17.2",
+                    "minecraft":  "~${minecraft_version}",
+                    "java":  "\u003e=21",
+                    "fabric-api":  "*",
+                    "cobblemon":  "\u003e=${cobblemon_version} \u003c1.8.0"
+                },
+    "mixins":  [
+                   "cobblemon_chromatics.mixins.json"
+               ]
+}
