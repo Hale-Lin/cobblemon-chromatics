@@ -1,81 +1,138 @@
 # Cobblemon Chromatics
 
-Cobblemon Chromatics 是一个独立的 Fabric 附加模组，用于为 Cobblemon 提供可维护的异色外观扩展。
+Cobblemon Chromatics 是一个独立的 Fabric 附加模组，为 Cobblemon 提供可持久化、可配置的宝可梦异色（Chromatic）外观。
 
-它面向 Minecraft `1.21.1`、Cobblemon `1.7.3`、Java `21`，mod ID 为 `cobblemon_chromatics`。本工程不修改、不 fork、也不重新分发 Cobblemon 本体。
+Chromatic 与 Cobblemon 原生闪光（shiny）是两个独立状态，可以分别存在，也可以同时存在。本工程不会修改、Fork 或重新分发 Cobblemon 本体。
 
-## 使用前须知
+## 版本基线
 
-- 服务端必须安装 Cobblemon `1.7.3` 和 Cobblemon Chromatics。
-- 客户端需要安装 Cobblemon Chromatics 才能看到动态异色渲染效果。
-- Chromatic 是独立于 Cobblemon 原生 shiny aspect 的外观状态；两者可同时存在，但闪光状态只允许异色影响配置认可的具名 layer。
-- 异色判定由服务端负责，并在 Pokemon 对象首次创建且缺少 profile 时写入持久化数据。
-- 世界实体刷新、出球、区块加载、客户端渲染不会重新抽取异色。
-- 同一种宝可梦的地区形态默认不生成异色，但仍会写入 `chromatic=false` 的 profile，避免以后被误判为未初始化。
-- 当前没有加入指令、保底机制、配置热重载或完整孵蛋遗传逻辑。
+- Minecraft `1.21.1`
+- Cobblemon `1.7.3`
+- Fabric Loader `>=0.17.2`
+- Fabric API `0.116.13+1.21.1`
+- Java `21`
+- Mod ID：`cobblemon_chromatics`
+
+## 当前功能
+
+- 服务端为 Pokemon 创建并持久化 Chromatic profile。
+- profile 由 Pokemon UUID 确定性生成，不会因实体重载、出球或客户端渲染而重复抽取。
+- 默认自然生成概率为 `1/4096`。
+- Chromatic 与 shiny 相互独立，支持普通、仅 shiny、仅 chromatic 和 shiny + chromatic 四种状态。
+- chromatic 个体的最终主贴图使用 `baseHsv`，所有最终 resolver layers 使用差异明显的 `layerHsv`。
+- 即使当前形态没有 layer，profile 仍会保存 `layerHsv`，供以后形态变化或进化后使用。
+- 地区形态默认排除：Alola、Galar、Hisui 和 Paldea。
+- 服务端向追踪实体的客户端同步权威 profile。
+- 摘要界面和 PC 预览面板显示对应的 shiny、chromatic 或 shiny + chromatic 状态图标。
+- 提供管理员生成、发放、设置和检查指令。
+
+## 渲染流程
+
+Cobblemon Chromatics 不替代 Cobblemon 的 resolver。Cobblemon 先根据物种、形态、aspects 和 shiny 状态选出最终主贴图及 layers，本模组再处理该结果：
+
+```text
+Pokemon 状态
+  -> Cobblemon resolver 选择普通或闪光主贴图及 layers
+  -> 客户端读取服务端同步的 Chromatic profile
+  -> 主贴图应用 baseHsv
+  -> 所有最终 layers 应用 layerHsv
+  -> 缓存并注册动态纹理
+  -> 按 Cobblemon 原有属性正常渲染
+```
+
+因此 shiny + chromatic 不需要单独的贴图分支：Cobblemon 选中的闪光贴图会继续接受 `baseHsv` 处理，最终 layers 则接受 `layerHsv` 处理。
+
+复制 layer 时会保留原有的 `enabled`、`tint`、`emissive`、`translucent` 和 `translucentCull` 属性，只替换其纹理来源。像素处理会保留透明区域，并尽量保护近黑轮廓、低饱和区域和近白高光。
+
+动态纹理缓存键包含原贴图、渲染 pass 和 profile hash，避免每帧重新读取和生成纹理。
 
 ## 安装
 
-将以下模组放入同一个 Fabric `mods` 目录：
+客户端和服务端均应安装相同版本的以下模组：
 
-- Fabric Loader `0.17.2` 或更高兼容版本
+- Fabric Loader
 - Fabric API
 - Cobblemon `1.7.3`
 - Cobblemon Chromatics
 
-服务端和客户端版本应保持一致。只有服务端安装时，服务端可以保存 profile，但普通客户端无法看到本模组提供的动态渲染。
+单人游戏同样需要在客户端实例中安装完整依赖。仅服务端安装时可以持久化 profile，但未安装本模组的客户端无法显示动态异色纹理和状态图标。
+
+请使用普通发布 JAR：
+
+```text
+cobblemon-chromatics-0.1.0-SNAPSHOT.jar
+```
+
+不要将 `-sources.jar` 放入游戏的 `mods` 目录。Cobblemon 本体和 Fabric Language Kotlin 不包含在 Chromatics JAR 中，必须由游戏实例单独提供。
 
 ## 配置
 
-默认配置文件位于：
+首次运行后，配置文件位于：
 
 ```text
 config/cobblemon_chromatics.json
 ```
 
-工程内的默认配置模板位于：
+当前有效字段：
+
+- `schemaVersion`：配置结构版本，当前为 `1`。
+- `developmentLogging`：开发日志开关，正式环境建议保持 `false`。
+- `chromaticChanceDenominator`：自然生成概率分母，默认 `4096`。
+- `chromaticParentBonusRolls`：异色亲本额外抽取次数，默认 `0`；当前孵蛋亲本接入尚未完成。
+
+当前不支持配置热重载，修改后应重启游戏或服务端。
+
+## Profile 数据
+
+当前 profile schema 为 `2`，包含：
+
+- `schemaVersion`
+- `chromatic`
+- `seed`
+- `baseHsv`
+- `layerHsv`
+- `variant`
+
+本项目仍处于早期开发阶段，当前 schema 不提供旧版 profile 自动迁移。非法或未知 profile 会被保留并报告，不会被静默覆盖或重新随机。
+
+## 管理员指令
+
+所有指令要求 Minecraft 权限等级 `2`：
 
 ```text
-pack/shared/config/cobblemon_chromatics.json
+/chromatics spawn <Pokemon属性>
+/chromatics give <玩家> <Pokemon属性>
+/chromatics set <实体选择器> <true|false>
+/chromatics inspect <实体选择器>
 ```
 
-主要字段：
+示例：
 
-- `chromaticChanceDenominator`: 基础概率分母，默认 `4096`，表示 `1/4096`。
-- `chromaticParentBonusRolls`: 亲本异色加成掷骰次数，默认 `0`。字段已预留，但当前孵蛋逻辑尚未完整接入亲本影响。
-- `defaultRenderMode`: 默认渲染模式，当前默认为 `STATIC_ONLY`。
-- `enabledLayerNames`: 允许参与异色处理的 resolver layer 名称，默认包含 `"flame"`。
-- `developmentLogging`: 开发调试日志开关，正式服建议保持 `false`。
+```text
+/chromatics spawn charizard level=50
+/chromatics spawn charizard shiny level=50
+/chromatics give Steve charizard level=50
+/chromatics set @e[type=cobblemon:pokemon,sort=nearest,limit=1] true
+/chromatics set @e[type=cobblemon:pokemon,sort=nearest,limit=1] false
+/chromatics inspect @e[type=cobblemon:pokemon,sort=nearest,limit=1]
+```
 
-修改配置后建议重启游戏或服务端。当前不承诺热重载。
+`spawn` 和 `give` 会直接写入 chromatic profile，不经过自然概率抽取。地区形态仍会被拒绝。`set` 只操作已经生成在世界中的 Pokemon 实体，不能直接选择队伍或 PC 中的 Pokemon。
 
-## 当前功能边界
+## 已知限制
 
-已实现或已建立的基础能力：
-
-- Pokemon 持久化 profile 的创建、读取和写入。
-- 基于 Pokemon UUID 的确定性异色抽取。
-- Chromatic 与原生 shiny 独立保存；叠加时保护 shiny 主贴图，只处理允许的具名 layer。
-- 地区形态排除策略。
-- 服务端到客户端的 profile 同步。
-- 客户端 `STATIC_ONLY`、`LAYERS_ONLY`、`FULL` 三种渲染模式的基础路径。
-- 动态 HSV 纹理缓存。
-
-仍需继续验证或开发的内容：
-
-- 所有 Cobblemon 创建入口的完整覆盖，例如礼物、化石、NPC 奖励、迁移等。
-- 孵蛋遗传规则与亲本概率加成的实际接入。
-- 指令、权限、保底机制和管理工具。
-- 资源重载时动态纹理缓存的释放与失效。
-- 更完整的客户端游戏内 QA。
+- `chromaticParentBonusRolls` 已预留，但孵蛋亲本概率加成尚未完整接入。
+- 动态纹理缓存尚未接入资源重载时的完整释放和失效流程。
+- 礼物、化石、NPC 奖励和迁移等特殊 Pokemon 创建入口仍需逐项验证。
+- 单元测试覆盖 profile、地区形态策略和状态图标判定，但完整纹理效果仍需要游戏内 QA。
 
 ## 构建
 
-首次构建前同步 Cobblemon 依赖：
+确保 `JAVA_HOME` 指向 Java 21，然后执行：
 
 ```powershell
 .\scripts\sync-dependencies.ps1
-.\gradlew.bat build
+.\gradlew.bat clean test build
 ```
 
 构建产物位于：
@@ -84,21 +141,25 @@ pack/shared/config/cobblemon_chromatics.json
 build/libs/
 ```
 
-Cobblemon JAR 仅作为本地编译依赖放在 `libs/` 下，不会被打入 Cobblemon Chromatics 的发布 JAR。
+Cobblemon JAR 仅作为本地编译依赖存放在 `libs/`，不会打入发布 JAR。
 
-## 开发运行
+开发运行：
 
 ```powershell
 .\gradlew.bat runClient
 .\gradlew.bat runServer
 ```
 
-首次运行服务端会因 EULA 停止。请阅读 Minecraft EULA 后再修改 `run/server/eula.txt`。
+首次运行专用服务器会因 EULA 停止。请阅读 Minecraft EULA 后再修改 `run/server/eula.txt`。
 
-## 文档索引
+## 文档
 
-- `docs/user-guide.md`: 使用须知与服主配置说明。
-- `docs/chromatic-system.md`: 异色系统规则。
-- `docs/compatibility.md`: 与 Cobblemon 资源、shiny、地区形态的兼容说明。
-- `docs/architecture.md`: 工程边界与服务端/客户端职责。
-- `docs/version-matrix.md`: 锁定版本矩阵。
+- `docs/user-guide.md`：安装、配置与管理员指令。
+- `docs/chromatic-system.md`：Chromatic profile 与生成规则。
+- `docs/compatibility.md`：Cobblemon、shiny 和地区形态兼容边界。
+- `docs/architecture.md`：共享、客户端与服务端职责。
+- `docs/version-matrix.md`：锁定版本矩阵。
+
+## License
+
+All Rights Reserved.
