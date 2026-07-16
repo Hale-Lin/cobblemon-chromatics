@@ -35,6 +35,7 @@ dependencies {
     unitTestRuntime(platform("org.junit:junit-bom:5.11.4"))
     unitTestRuntime("org.junit.jupiter:junit-jupiter")
     unitTestRuntime("org.junit.platform:junit-platform-launcher")
+    unitTestRuntime("com.google.code.gson:gson:2.11.0")
 }
 
 val verifyCobblemonDependency by tasks.registering {

@@ -3,7 +3,11 @@
     "package":  "dev.cobblemonproject.chromatics.mixin",
     "compatibilityLevel":  "JAVA_21",
     "mixins":  [
-                   "PokemonInitializeMixin"
+                   "PokemonInitializeMixin",
+                   "effect.BattleSideShinyEffectMixin",
+                   "effect.PastureShinyEffectMixin",
+                   "effect.EmptyPokeBallShinyEffectMixin",
+                   "effect.IllusionShinyEffectMixin"
                ],
     "injectors":  {
                       "defaultRequire":  1
@@ -14,6 +18,9 @@
                    "client.SummaryStatusIconMixin",
                    "client.PCGUIStatusIconMixin",
                    "client.StorageSlotStatusIconMixin",
-                   "client.SearchCompanionMixin"
+                   "client.SearchCompanionMixin",
+                   "client.PokemonClientDelegateShinyEffectMixin",
+                   "client.CobblemonClientShinyEffectMixin",
+                   "client.SpawnSnowstormEntityParticleHandlerMixin"
                ]
 }
