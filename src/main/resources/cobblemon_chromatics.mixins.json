@@ -12,6 +12,8 @@
                    "client.VaryingModelRepositoryMixin",
                    "client.ModelLayerAccessor",
                    "client.SummaryStatusIconMixin",
-                   "client.PCGUIStatusIconMixin"
+                   "client.PCGUIStatusIconMixin",
+                   "client.StorageSlotStatusIconMixin",
+                   "client.SearchCompanionMixin"
                ]
 }
