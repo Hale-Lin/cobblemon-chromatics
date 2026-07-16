@@ -19,6 +19,7 @@
                    "client.PCGUIStatusIconMixin",
                    "client.StorageSlotStatusIconMixin",
                    "client.SearchCompanionMixin",
+                   "client.PokemonOnShoulderRendererMixin",
                    "client.PokemonClientDelegateShinyEffectMixin",
                    "client.CobblemonClientShinyEffectMixin",
                    "client.SpawnSnowstormEntityParticleHandlerMixin"
