@@ -23,7 +23,11 @@ Chromatic 与 Cobblemon 原生闪光（shiny）是两个独立状态，可以分
 - 即使当前形态没有 layer，profile 仍会保存 `layerHsv`，供以后形态变化或进化后使用。
 - 地区形态默认排除：Alola、Galar、Hisui 和 Paldea。
 - 服务端向追踪实体的客户端同步权威 profile。
-- 摘要界面和 PC 预览面板显示对应的 shiny、chromatic 或 shiny + chromatic 状态图标。
+- 摘要界面、PC 预览面板和 PC 槽位显示对应的 shiny、chromatic 或 shiny + chromatic 状态图标。
+- PC 搜索支持 `chromatic`、`chromatics`、`!chromatic` 和 `!chromatics`，并可与 Cobblemon 原有条件组合。
+- PC 右侧预览模型支持异色渲染，PC 槽位缩略模型保持原有渲染。
+- 肩上动作宝可梦根据肩部 NBT 中的 Pokemon UUID 读取客户端 profile，并复用异色主贴图和 layer 渲染。
+- 异色与闪光+异色拥有独立的双彩虹环/紧凑环粒子变体，并接入 Cobblemon 的闪光音效与粒子触发路径。
 - 提供管理员生成、发放、设置和检查指令。
 
 ## 渲染流程
@@ -45,6 +49,8 @@ Pokemon 状态
 复制 layer 时会保留原有的 `enabled`、`tint`、`emissive`、`translucent` 和 `translucentCull` 属性，只替换其纹理来源。像素处理会保留透明区域，并尽量保护近黑轮廓、低饱和区域和近白高光。
 
 动态纹理缓存键包含原贴图、渲染 pass 和 profile hash，避免每帧重新读取和生成纹理。
+
+PC 预览和肩上渲染通过临时的线程上下文传递当前 Pokemon，渲染结束后保证清理；这避免把异色材质错误应用到 PC 槽位或其他 GUI。异色光环则按普通、shiny、chromatic 和 shiny + chromatic 四态选择效果资源，并保留 Cobblemon 原有的触发时机。
 
 ## 安装
 
@@ -124,6 +130,7 @@ config/cobblemon_chromatics.json
 - `chromaticParentBonusRolls` 已预留，但孵蛋亲本概率加成尚未完整接入。
 - 动态纹理缓存尚未接入资源重载时的完整释放和失效流程。
 - 礼物、化石、NPC 奖励和迁移等特殊 Pokemon 创建入口仍需逐项验证。
+- 肩上渲染和光环覆盖已完成代码接入，但仍需要在实际客户端中验证不同 Pokemon、形态和加载路径。
 - 单元测试覆盖 profile、地区形态策略和状态图标判定，但完整纹理效果仍需要游戏内 QA。
 
 ## 构建
